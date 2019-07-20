@@ -1,4 +1,10 @@
 function(input, output){
+  
+  selected_area <- reactive({
+    req(input$area)
+    readWKT(input$area)
+  })
+  
   # Create reactive of the area to download as sp object
   download_geometry <- reactive({
     wkt <- readWKT(input$area)
@@ -14,6 +20,7 @@ function(input, output){
     req(input$area, input$max_occ)
     occ_search(geometry = writeWKT(download_geometry()), limit=input$max_occ)$data
   })
+  
   
   # Transform extent into a sp_Polygon object, execute de buffer
   extent <- reactive({
@@ -91,9 +98,15 @@ function(input, output){
         urlTemplate = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
         attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
       ) %>%
+      setView(-68, 53, zoom = 5)
+  })
+  
+  observe({
+    leafletProxy("map") %>%
+      clearShapes() %>%
       addPolygons(data = extent(), color="#4daf4a") %>%
       addPolygons(data=download_geometry(), color="#525252", fillColor = "transparent") %>%
-      addPolygons(data = readWKT(input$area), color="#e41a1c")
+      addPolygons(data = selected_area(), color="#e41a1c")
   })
   
   # Barplot for conservation status

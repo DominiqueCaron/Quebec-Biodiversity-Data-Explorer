@@ -1,21 +1,3 @@
-library(shiny)
-library(shinythemes)
-library(rgbif)
-library(dplyr)
-library(stringr)
-library(DT)
-library(rredlist)
-library(leaflet)
-library(sp)
-library(rgeos)
-library(raster)
-library(RColorBrewer)
-library(ggplot2)
-library(natserv)
-library(rgdal)
-library(tidyr)
-tbl_status <- read.csv("species_status.csv", row.names = 1)
-
 function(input, output){
   # Create reactive of the area to download as sp object
   download_geometry <- reactive({

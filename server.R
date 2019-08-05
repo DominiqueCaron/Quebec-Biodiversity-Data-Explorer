@@ -5,6 +5,18 @@ function(input, output){
     readWKT(input$area)
   })
   
+  output$selection <- renderUI({
+    if (input$selection_mode == "wkt"){
+      textInput(inputId = "area", 
+                label = "Area of interest :")
+    }
+    else if (input$selection_mode == "click"){
+      checkboxInput(inputId = "click_activation",
+                    label = "Enable area selection",
+                    value = TRUE)
+    }
+  })
+  
   # Create a reactive value to store position clicked
   click_selection <- reactiveValues(x = NULL, y = NULL)
   

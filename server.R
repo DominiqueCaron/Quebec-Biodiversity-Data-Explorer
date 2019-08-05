@@ -5,6 +5,39 @@ function(input, output){
     readWKT(input$area)
   })
   
+  # Create a reactive value to store position clicked
+  click_selection <- reactiveValues(x = NULL, y = NULL)
+  
+  # When the user click on the map, store the positions in the object click_selection
+  observeEvent(input$map_click, {
+      tempx <- c(click_selection$x, input$map_click$lng)
+      tempy <- c(click_selection$y, input$map_click$lat)
+      click_selection$x <- tempx
+      click_selection$y <- tempy
+  })
+  
+  # When the user click on the map, show the polygon being created
+  observe({
+    if (length(click_selection$x) > 1) {
+        leafletProxy("map") %>%
+          removeMarker(layerId = "single_marker") %>%
+          addPolylines(
+            lng = c(click_selection$x),
+            lat = c(click_selection$y),
+            stroke = TRUE,
+            weight = 2,
+            color = "red",
+            group = "region_line"
+          )
+    }
+    if (length(click_selection$x) == 1) {
+      leafletProxy("map") %>%
+        addMarkers(lng = click_selection$x,
+                   lat = click_selection$y,
+                   layerId = "single_marker")
+    }
+  })
+  
   # Create reactive of the area to download as sp object
   download_geometry <- reactive({
     wkt <- readWKT(input$area)

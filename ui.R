@@ -10,8 +10,12 @@ fluidPage(theme=shinytheme("flatly"),
                          # Text input for defining the maximum extent of the territory we want to study
                          # downloading gbif's data can be time consuming, we want to get the records
                          # only at the beginning
-                         radioButtons("selection_mode", label = "Selection mode: ", choices = c("WKT format" = "wkt", "Click on the map" = "click")),
+                         radioButtons("selection_mode", label = "Selection mode: ", choices = c("WKT format" = "wkt", "Click on the map" = "mapclick")),
                          uiOutput("selection"),
+                         actionButton(inputId = "eraseselection",
+                                             label = "Erase Selection"),
+                         br(),
+                         br(),
                          
                          # The user needs to choose how far from this area he wants to download the data
                          numericInput(inputId = "max_buffer",

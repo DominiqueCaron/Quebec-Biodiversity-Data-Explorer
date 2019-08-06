@@ -10,10 +10,16 @@ function(input, output){
       textInput(inputId = "area", 
                 label = "Area of interest :")
     }
-    else if (input$selection_mode == "click"){
-      checkboxInput(inputId = "click_activation",
-                    label = "Enable area selection",
-                    value = TRUE)
+    else if (input$selection_mode == "mapclick"){
+      fluidRow(
+        column(4,
+               checkboxInput(inputId = "click_activation",
+                             label = "Enable area selection",
+                             value = TRUE)),
+        column(4,
+               actionButton(inputId = "selectbutton",
+                            label = "Select"))
+      )
     }
   })
   
@@ -22,10 +28,12 @@ function(input, output){
   
   # When the user click on the map, store the positions in the object click_selection
   observeEvent(input$map_click, {
+    if (input$selection_mode == "mapclick" && input$click_activation == TRUE) {
       tempx <- c(click_selection$x, input$map_click$lng)
       tempy <- c(click_selection$y, input$map_click$lat)
       click_selection$x <- tempx
       click_selection$y <- tempy
+    }
   })
   
   # When the user click on the map, show the polygon being created
@@ -49,6 +57,34 @@ function(input, output){
                    layerId = "single_marker")
     }
   })
+  
+  # When user push erase selection:
+  observeEvent(input$eraseselection,{
+    leafletProxy("map") %>%
+      removeMarker(layerId = "single_marker") %>%
+      clearGroup("region_line")
+    if (!is.null(click_selection$x)){
+      click_selection$x = NULL
+      click_selection$y = NULL
+    }
+  }
+  )
+  
+  # When user push select button:
+  observeEvent(input$selectbutton,{
+    if (length(click_selection$x) >=3){
+      tempx <- c(click_selection$x, click_selection$x[1])
+      tempy <- c(click_selection$y, click_selection$y[1])
+      click_selection$x <- tempx
+      click_selection$y <- tempy
+      extent <- Polygon(cbind(click_selection$x, click_selection$y)) %>%
+        list() %>% 
+        Polygons(ID = 1) %>% 
+        list() %>%
+        SpatialPolygons(proj4string=CRS(as.character("+proj=longlat +ellps=WGS84")))
+    }
+  }
+  )
   
   # Create reactive of the area to download as sp object
   download_geometry <- reactive({

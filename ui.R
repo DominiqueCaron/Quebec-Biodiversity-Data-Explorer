@@ -12,6 +12,8 @@ fluidPage(theme=shinytheme("flatly"),
                          # only at the beginning
                          radioButtons("selection_mode", label = "Selection mode: ", choices = c("WKT format" = "wkt", "Click on the map" = "mapclick")),
                          uiOutput("selection"),
+                         actionButton(inputId = "selectbutton",
+                                             label = "Select"),
                          actionButton(inputId = "eraseselection",
                                              label = "Erase Selection"),
                          br(),

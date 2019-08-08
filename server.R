@@ -1,4 +1,4 @@
-function(input, output){
+function(input, output,session){
   
   selected_area <- reactive({
     req(input$area)
@@ -11,20 +11,17 @@ function(input, output){
                 label = "Area of interest :")
     }
     else if (input$selection_mode == "mapclick"){
-      fluidRow(
-        column(4,
-               checkboxInput(inputId = "click_activation",
+      checkboxInput(inputId = "click_activation",
                              label = "Enable area selection",
-                             value = TRUE)),
-        column(4,
-               actionButton(inputId = "selectbutton",
-                            label = "Select"))
-      )
-    }
+                             value = TRUE)}
   })
   
   # Create a reactive value to store position clicked
   click_selection <- reactiveValues(x = NULL, y = NULL)
+  selected_area <- reactiveValues(selection = NULL,
+                                  buffer = NULL,
+                                  filter = NULL)
+  
   
   # When the user click on the map, store the positions in the object click_selection
   observeEvent(input$map_click, {
@@ -72,7 +69,7 @@ function(input, output){
   
   # When user push select button:
   observeEvent(input$selectbutton,{
-    if (length(click_selection$x) >=3){
+    if (input$selection_mode == "mapclick" & length(click_selection$x) >=3){
       tempx <- c(click_selection$x, click_selection$x[1])
       tempy <- c(click_selection$y, click_selection$y[1])
       click_selection$x <- tempx
@@ -82,6 +79,18 @@ function(input, output){
         Polygons(ID = 1) %>% 
         list() %>%
         SpatialPolygons(proj4string=CRS(as.character("+proj=longlat +ellps=WGS84")))
+      updateCheckboxInput(session, "click_activation", value = FALSE)
+      selected_area$selection <- extent
+    }
+    else if (input$selection_mode == "wkt" & input$area != ""){
+      wkt <- readWKT(input$area)
+      proj4string(wkt) = CRS("+proj=longlat +ellps=WGS84")
+      selected_area$selection <- wkt
+    }
+    if (!is.null(selected_area$selection)){
+      extent <- spTransform(selected_area$selection, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs "))  %>%
+        gBuffer(width = 1*input$max_buffer*1000)
+      selected_area$buffer <- spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
     }
   }
   )
@@ -99,7 +108,7 @@ function(input, output){
   # Get gbif's data according to specification when the Get button is pushec
   occ <- eventReactive(input$get_data, {
     req(input$area, input$max_occ)
-    occ_search(geometry = writeWKT(download_geometry()), limit=input$max_occ)$data
+    occ_search(geometry = writeWKT(selected_area$buffer), limit=input$max_occ)$data
   })
   
   

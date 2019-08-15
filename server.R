@@ -130,24 +130,42 @@ function(input, output,session){
   })
   
   # Transform extent into a sp_Polygon object, execute de buffer
-  extent <- reactive({
-    req(input$area)
-    wkt <- readWKT(input$area)
-    proj4string(wkt) = CRS("+proj=longlat +ellps=WGS84")
-    # Project on Quebec Lambert
-    extent <- spTransform(wkt, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
-      # Buffer
-      gBuffer(width = 1*input$buffer*1000)
-    # Retransform into geographic coordinates
-    spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
-  })
+  filter_area <- reactive({
+    if (!is.null(occ_data$data)){
+      extent <- spTransform(selected_area$selection, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
+        gBuffer(width = 1*input$buffer*1000)
+      extent <- spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
+      leafletProxy("map") %>%
+        removeMarker(layerId = "single_marker") %>%
+        addPolygons(
+          data = extent,
+          stroke = TRUE,
+          weight = 2,
+          color = "green",
+          group = "filter_area"
+        )
+      extent
+    }
+  }
+  )
+    
+  #   req(input$area)
+  #   wkt <- readWKT(input$area)
+  #   proj4string(wkt) = CRS("+proj=longlat +ellps=WGS84")
+  #   # Project on Quebec Lambert
+  #   extent <- spTransform(wkt, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
+  #     # Buffer
+  #     gBuffer(width = 1*input$buffer*1000)
+  #   # Retransform into geographic coordinates
+  #   spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
+  # })
   
   # Create a table with the species present in the buffered extent with their conservation
   # statuses
   species_table <- reactive({
-    req(occ())
+    req(occ_data$data)
     # Remove occurrence with fuzzy taxon name
-    occ_clean <- occ() %>% 
+    occ_clean <- occ_data$data %>% 
       filter(!str_detect(issues, "txmatnon|txmathi|txmatfuz")) %>%
       filter(!is.na(eventDate))
     # Transform into a spatial object
@@ -157,7 +175,7 @@ function(input, output,session){
       proj4string = CRS("+proj=longlat +ellps=WGS84"))
     # Keep only occurrences in the buffered extent
     # There is a bug in the function intersect. We need to dupplicate the occurrences
-    occ_intersect <- as.data.frame(raster::intersect(bind(occ_sp,occ_sp), extent()))
+    occ_intersect <- as.data.frame(raster::intersect(bind(occ_sp,occ_sp), filter_area()))
     # Summarise for species, keep some info, count the number of observation
     species_table <- occ_intersect %>%
       group_by(species) %>%
@@ -180,7 +198,7 @@ function(input, output,session){
   
   # Show downloaded data
   output$data <- DT::renderDataTable({
-    occ()
+    occ_data$data
   })
   
   # Datatable with conservation status

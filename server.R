@@ -19,8 +19,9 @@ function(input, output,session){
   # Create a reactive value to store position clicked
   click_selection <- reactiveValues(x = NULL, y = NULL)
   selected_area <- reactiveValues(selection = NULL,
-                                  buffer = NULL,
+                                  downloadarea = NULL,
                                   filter = NULL)
+  occ_data <- reactiveValues(data = NULL)
   
   
   # When the user click on the map, store the positions in the object click_selection
@@ -88,29 +89,45 @@ function(input, output,session){
       selected_area$selection <- wkt
     }
     if (!is.null(selected_area$selection)){
-      extent <- spTransform(selected_area$selection, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs "))  %>%
-        gBuffer(width = 1*input$max_buffer*1000)
-      selected_area$buffer <- spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
+      leafletProxy("map") %>%
+        removeMarker(layerId = "single_marker") %>%
+        addPolygons(
+          data = selected_area$selection,
+          stroke = TRUE,
+          weight = 2,
+          color = "red",
+          group = "region_line"
+        )
     }
   }
   )
   
+  
   # Create reactive of the area to download as sp object
   download_geometry <- reactive({
-    wkt <- readWKT(input$area)
-    proj4string(wkt) = CRS("+proj=longlat +ellps=WGS84")
-    extent <- spTransform(wkt, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
+    extent <- spTransform(selected_area$selection, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
       # Buffer
       gBuffer(width = 1*input$max_buffer*1000)
     spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
   })
   
   # Get gbif's data according to specification when the Get button is pushec
-  occ <- eventReactive(input$get_data, {
-    req(input$area, input$max_occ)
-    occ_search(geometry = writeWKT(selected_area$buffer), limit=input$max_occ)$data
+  observeEvent(input$get_data, {
+    withProgress(message = "Data extraction...",{
+    occ_data$data <- occ_search(geometry = writeWKT(download_geometry()), limit=input$max_occ)$data
+    if (!is.null(download_geometry())){
+      leafletProxy("map") %>%
+        removeMarker(layerId = "single_marker") %>%
+        addPolygons(
+          data = download_geometry(),
+          stroke = TRUE,
+          weight = 2,
+          color = "royalblue4",
+          group = "download_area"
+        )
+    }
+    })
   })
-  
   
   # Transform extent into a sp_Polygon object, execute de buffer
   extent <- reactive({
@@ -193,10 +210,10 @@ function(input, output,session){
   
   observe({
     leafletProxy("map") %>%
-      clearShapes() %>%
-      addPolygons(data = extent(), color="#4daf4a") %>%
-      addPolygons(data=download_geometry(), color="#525252", fillColor = "transparent") %>%
-      addPolygons(data = selected_area(), color="#e41a1c")
+      clearShapes() #%>%
+      #addPolygons(data = extent(), color="#4daf4a") %>%
+      #addPolygons(data = download_geometry(), color="#525252", fillColor = "transparent") #%>%
+      #addPolygons(data = selected_area(), color="#e41a1c")
   })
   
   # Barplot for conservation status

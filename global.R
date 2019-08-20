@@ -1,6 +1,7 @@
 # Needed libraries
 library(shiny)
 library(shinythemes)
+library(shinyBS)
 library(rgbif)
 library(dplyr)
 library(stringr)

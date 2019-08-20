@@ -60,7 +60,9 @@ function(input, output,session){
   observeEvent(input$eraseselection,{
     leafletProxy("map") %>%
       removeMarker(layerId = "single_marker") %>%
-      clearGroup("region_line")
+      clearGroup("region_line") %>%
+      clearGroup("download_area") %>%
+      clearGroup("filter_area")
     if (!is.null(click_selection$x)){
       click_selection$x = NULL
       click_selection$y = NULL

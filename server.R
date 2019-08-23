@@ -194,6 +194,13 @@ function(input, output,session){
     occ_data$data
   })
   
+  output$downloadData <- downloadHandler(
+    filename = "Occurence_data.csv",
+    content = function(file) {
+      write.csv(occ_data$data, file, row.names = FALSE)
+    }
+  )
+  
   # Datatable with conservation status
   output$species <- DT::renderDataTable({
     species_table() %>%
@@ -203,7 +210,8 @@ function(input, output,session){
   
   # Download datatable of species
   output$downloadspecies <- downloadHandler(
-    filename = "Species_Table.csv", content = function(file) {
+    filename = "Species_Table.csv",
+    content = function(file) {
       write.csv(species_table(), file, row.names = FALSE)
     },
     contentType="text/csv"

@@ -77,6 +77,9 @@ fluidPage(theme=shinytheme("flatly"),
                      br(),
                      p(tags$b("This table shows all the records downloaded from GBIF. None of the filters (maximum year
                        and distance from selected area) are applied on this datatable.")),
+                     downloadButton("downloadData", "Download"),
+                     br(),
+                     br(),
                      # Table for the raw data downloaded from gbif
                      dataTableOutput(outputId = "data")
             ),

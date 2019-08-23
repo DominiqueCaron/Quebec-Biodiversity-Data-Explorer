@@ -18,4 +18,4 @@ library(rgdal)
 library(tidyr)
 
 # Database of special status species
-tbl_status <- read.csv("species_status.csv", row.names = 1)
+tbl_status <- read.csv("species_status.csv", row.names = 1)[,-1]

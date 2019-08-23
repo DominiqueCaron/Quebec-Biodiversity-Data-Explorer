@@ -44,7 +44,7 @@ function(input, output,session){
             lat = c(click_selection$y),
             stroke = TRUE,
             weight = 2,
-            color = "red",
+            color = "#d95f02",
             group = "region_line"
           )
     }
@@ -97,7 +97,7 @@ function(input, output,session){
           data = selected_area$selection,
           stroke = TRUE,
           weight = 2,
-          color = "red",
+          color = "#d95f02",
           group = "region_line"
         )
     }
@@ -125,7 +125,8 @@ function(input, output,session){
           data = download_geometry(),
           stroke = TRUE,
           weight = 2,
-          color = "royalblue4",
+          color = "#7570b3",
+          fillOpacity = 0,
           group = "download_area"
         )
     }
@@ -134,24 +135,28 @@ function(input, output,session){
   
   # Transform extent into a sp_Polygon object, execute de buffer
   filter_area <- reactive({
-    if (!is.null(occ_data$data)){
+    req(selected_area$selection)
       extent <- spTransform(selected_area$selection, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
         gBuffer(width = 1*input$buffer*1000)
       extent <- spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
-      leafletProxy("map") %>%
-        removeMarker(layerId = "single_marker") %>%
-        addPolygons(
-          data = extent,
-          stroke = TRUE,
-          weight = 2,
-          color = "green",
-          group = "filter_area"
-        )
       extent
-    }
-  }
+      }
   )
     
+  observeEvent(filter_area(),{
+    leafletProxy("map") %>%
+      removeMarker(layerId = "single_marker") %>%
+      clearGroup("filter_area") %>%
+      addPolygons(
+        data = filter_area(),
+        stroke = TRUE,
+        weight = 2,
+        color = "#1b9e77",
+        fillOpacity = 0,
+        group = "filter_area"
+      )
+  }
+  )
   
   # Create a table with the species present in the buffered extent with their conservation
   # statuses
@@ -174,7 +179,7 @@ function(input, output,session){
       group_by(species) %>%
       summarise(last_record=str_sub(max(eventDate),1,10),
                 kingdom = kingdom[1],
-                class=class[1],
+                class = class[1],
                 # Divide by 2 to correct the dupplication we did when calling the function intersect
                 No_records=n()/2) %>%
       filter(!is.na(species)) %>%
@@ -223,6 +228,12 @@ function(input, output,session){
       addTiles(
         urlTemplate = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
         attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
+      ) %>%
+      addLegend("topright",
+                title = "Legend",
+                colors = c("#d95f02", "#7570b3", "#1b9e77"),
+                labels = c("Area Selected", "Data extraction area", "Filter Area"),
+                group = c("region_line","download_area","filter_area")
       ) %>%
       setView(-68, 53, zoom = 5)
   })

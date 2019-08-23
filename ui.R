@@ -103,7 +103,7 @@ fluidPage(theme=shinytheme("flatly"),
                      helpText(a("NatureServe conservation status definition",
                                 href = "http://explorer.natureserve.org/nsranks.htm")),
                      helpText(a("IUCN conservation status categories",
-                                href = "http://www.iucnredlist.org/static/categories_criteria_3_1#categories"))
+                                href = "https://www.iucnredlist.org/resources/categories-and-criteria"))
             )
           )
 )

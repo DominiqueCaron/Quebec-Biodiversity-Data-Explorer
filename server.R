@@ -107,6 +107,7 @@ function(input, output,session){
   
   # Create reactive of the area to download as sp object
   download_geometry <- reactive({
+    req(selected_area$selection)
     extent <- spTransform(selected_area$selection, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
       # Buffer
       gBuffer(width = 1*input$max_buffer*1000)
@@ -151,16 +152,6 @@ function(input, output,session){
   }
   )
     
-  #   req(input$area)
-  #   wkt <- readWKT(input$area)
-  #   proj4string(wkt) = CRS("+proj=longlat +ellps=WGS84")
-  #   # Project on Quebec Lambert
-  #   extent <- spTransform(wkt, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
-  #     # Buffer
-  #     gBuffer(width = 1*input$buffer*1000)
-  #   # Retransform into geographic coordinates
-  #   spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
-  # })
   
   # Create a table with the species present in the buffered extent with their conservation
   # statuses
@@ -230,10 +221,7 @@ function(input, output,session){
   
   observe({
     leafletProxy("map") %>%
-      clearShapes() #%>%
-      #addPolygons(data = extent(), color="#4daf4a") %>%
-      #addPolygons(data = download_geometry(), color="#525252", fillColor = "transparent") #%>%
-      #addPolygons(data = selected_area(), color="#e41a1c")
+      clearShapes()
   })
   
   # Barplot for conservation status

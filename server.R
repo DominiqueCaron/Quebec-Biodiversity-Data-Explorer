@@ -182,10 +182,10 @@ function(input, output,session){
       left_join(tbl_status, by="species")
     species_table$QC_status <- species_table$QC_status %>%
       as.character() %>%
-      replace_na("taxon_notlisted")
+      replace_na("SNR")
     species_table$iucn <- species_table$iucn %>%
       as.character() %>%
-      replace_na("taxon_notlisted")
+      replace_na("Not listed")
     return(species_table)
   })
   

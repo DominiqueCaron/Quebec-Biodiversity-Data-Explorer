@@ -264,8 +264,9 @@ function(input, output,session){
         ylab("Number of species") +
         coord_flip() +
         scale_fill_manual(limits = c( "DD", "EW", "CR", "EN", "VU", "NT", "LC", "NE"), name = "Status", 
-                          values = c("grey", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#a6d96a", "#006837")) +
-        theme_bw()
+                          values = c("#878787", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#66bd63", "#006837")) +
+        theme_bw() +
+        theme(text = element_text(size=20))
     }
     else {
       ggplot(data) +
@@ -274,8 +275,9 @@ function(input, output,session){
         ylab("Number of species") +
         coord_flip() +
         scale_fill_manual(limits = c("SNA", "SH-SX", "S1", "S2", "S3", "S4", "S5", "SNR"), name = "Status", 
-                          values = c("grey", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#a6d96a", "#006837")) +
-        theme_bw()
+                          values = c("#878787", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#66bd63", "#006837")) +
+        theme_bw() +
+        theme(text = element_text(size=20))
     }
   })
 }

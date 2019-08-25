@@ -183,6 +183,8 @@ function(input, output,session){
                 # Divide by 2 to correct the dupplication we did when calling the function intersect
                 No_records=n()/2) %>%
       filter(!is.na(species)) %>%
+      filter(kingdom %in% input$kingdom) %>%
+      filter(as.numeric(substring(last_record,1,4)) >= input$max_year) %>%
       # Add conservation statuses from the database tbl_status
       left_join(tbl_status, by="species")
     species_table$QC_status <- species_table$QC_status %>%
@@ -190,7 +192,7 @@ function(input, output,session){
       replace_na("SNR")
     species_table$iucn <- species_table$iucn %>%
       as.character() %>%
-      replace_na("Not listed")
+      replace_na("NE")
     return(species_table)
   })
   
@@ -245,22 +247,32 @@ function(input, output,session){
   
   # Barplot for conservation status
   output$plot <- renderPlot({
-    data <- species_table() %>%
-      filter(kingdom %in% input$kingdom) %>%
-      filter(as.numeric(substring(last_record,1,4)) >= input$max_year)
+    data <- species_table()
+    heighcol <- input$barheight
+    data$QC_status [data$QC_status %in% c("S1B", "S1M")] <- "S1"
+    data$QC_status[data$QC_status %in% c("S2B", "S2M")] <- "S2"
+    data$QC_status[data$QC_status %in% c("S3B", "S3M")] <- "S3"
+    data$QC_status[data$QC_status %in% c("S4B", "S4M")] <- "S4"
+    data$QC_status[data$QC_status %in% c("S5B", "S5M")] <- "S5"
     if (input$conserv_system == "iucn") {
-      ggplot(data, aes(iucn))+
-        geom_bar(aes(fill=kingdom)) +
-        xlab("Conservation Status") +
+      ggplot(data) +
+        geom_bar(aes(class, fill = iucn)) +
+        xlab("Class") +
         ylab("Number of species") +
-        scale_fill_brewer(name = "Class", palette = "Set2")
+        coord_flip() +
+        scale_fill_manual(limits = c("EW", "CR", "EN", "VU", "NT", "LC", "NE", "DD"), name = "Status", 
+                          values = c("black", "red4", "red", "orange", "yellow", "forestgreen", "darkgreen", "grey")) +
+        theme_bw()
     }
     else {
-      ggplot(data, aes(QC_status))+
-        geom_bar(aes(fill=kingdom)) +
-        xlab("Conservation Status") +
+      ggplot(data) +
+        geom_bar(aes(class, fill = QC_status)) +
+        xlab("Class") +
         ylab("Number of species") +
-        scale_fill_brewer(name = "Class", palette = "Set2")
+        coord_flip() +
+        scale_fill_manual(limits = c("SX", "SH", "S1", "S2", "S3", "S4", "S5", "SNR", "SNA"), name = "Status", 
+                          values = c("black", "black", "red4", "red", "orange", "yellow", "forestgreen", "darkgreen", "grey")) +
+        theme_bw()
     }
   })
 }

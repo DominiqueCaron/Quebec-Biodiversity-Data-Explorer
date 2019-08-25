@@ -44,7 +44,7 @@ function(input, output,session){
             lat = c(click_selection$y),
             stroke = TRUE,
             weight = 2,
-            color = "red",
+            color = "#d95f02",
             group = "region_line"
           )
     }
@@ -97,7 +97,7 @@ function(input, output,session){
           data = selected_area$selection,
           stroke = TRUE,
           weight = 2,
-          color = "red",
+          color = "#d95f02",
           group = "region_line"
         )
     }
@@ -125,7 +125,8 @@ function(input, output,session){
           data = download_geometry(),
           stroke = TRUE,
           weight = 2,
-          color = "royalblue4",
+          color = "#7570b3",
+          fillOpacity = 0,
           group = "download_area"
         )
     }
@@ -134,24 +135,28 @@ function(input, output,session){
   
   # Transform extent into a sp_Polygon object, execute de buffer
   filter_area <- reactive({
-    if (!is.null(occ_data$data)){
+    req(selected_area$selection)
       extent <- spTransform(selected_area$selection, CRS("+proj=lcc +lat_1=60 +lat_2=46 +lat_0=44 +lon_0=-68.5 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs ")) %>%
         gBuffer(width = 1*input$buffer*1000)
       extent <- spTransform(extent, CRS("+proj=longlat +ellps=WGS84"))
-      leafletProxy("map") %>%
-        removeMarker(layerId = "single_marker") %>%
-        addPolygons(
-          data = extent,
-          stroke = TRUE,
-          weight = 2,
-          color = "green",
-          group = "filter_area"
-        )
       extent
-    }
-  }
+      }
   )
     
+  observeEvent(filter_area(),{
+    leafletProxy("map") %>%
+      removeMarker(layerId = "single_marker") %>%
+      clearGroup("filter_area") %>%
+      addPolygons(
+        data = filter_area(),
+        stroke = TRUE,
+        weight = 2,
+        color = "#1b9e77",
+        fillOpacity = 0,
+        group = "filter_area"
+      )
+  }
+  )
   
   # Create a table with the species present in the buffered extent with their conservation
   # statuses
@@ -174,18 +179,20 @@ function(input, output,session){
       group_by(species) %>%
       summarise(last_record=str_sub(max(eventDate),1,10),
                 kingdom = kingdom[1],
-                class=class[1],
+                class = class[1],
                 # Divide by 2 to correct the dupplication we did when calling the function intersect
                 No_records=n()/2) %>%
       filter(!is.na(species)) %>%
+      filter(kingdom %in% input$kingdom) %>%
+      filter(as.numeric(substring(last_record,1,4)) >= input$max_year) %>%
       # Add conservation statuses from the database tbl_status
       left_join(tbl_status, by="species")
     species_table$QC_status <- species_table$QC_status %>%
       as.character() %>%
-      replace_na("taxon_notlisted")
+      replace_na("SNR")
     species_table$iucn <- species_table$iucn %>%
       as.character() %>%
-      replace_na("taxon_notlisted")
+      replace_na("NE")
     return(species_table)
   })
   
@@ -193,6 +200,13 @@ function(input, output,session){
   output$data <- DT::renderDataTable({
     occ_data$data
   })
+  
+  output$downloadData <- downloadHandler(
+    filename = "Occurence_data.csv",
+    content = function(file) {
+      write.csv(occ_data$data, file, row.names = FALSE)
+    }
+  )
   
   # Datatable with conservation status
   output$species <- DT::renderDataTable({
@@ -203,7 +217,8 @@ function(input, output,session){
   
   # Download datatable of species
   output$downloadspecies <- downloadHandler(
-    filename = "Species_Table.csv", content = function(file) {
+    filename = "Species_Table.csv",
+    content = function(file) {
       write.csv(species_table(), file, row.names = FALSE)
     },
     contentType="text/csv"
@@ -216,6 +231,12 @@ function(input, output,session){
         urlTemplate = "//{s}.tiles.mapbox.com/v3/jcheng.map-5ebohr46/{z}/{x}/{y}.png",
         attribution = 'Maps by <a href="http://www.mapbox.com/">Mapbox</a>'
       ) %>%
+      addLegend("topright",
+                title = "Legend",
+                colors = c("#d95f02", "#7570b3", "#1b9e77"),
+                labels = c("Area Selected", "Data extraction area", "Filter Area"),
+                group = c("region_line","download_area","filter_area")
+      ) %>%
       setView(-68, 53, zoom = 5)
   })
   
@@ -225,23 +246,40 @@ function(input, output,session){
   })
   
   # Barplot for conservation status
-  output$plot <- renderPlot({
-    data <- species_table() %>%
-      filter(kingdom %in% input$kingdom) %>%
-      filter(as.numeric(substring(last_record,1,4)) >= input$max_year)
+  output$plot <- renderPlotly({
+    data <- species_table()
+    heighcol <- input$barheight
+    data$QC_status [data$QC_status %in% c("S1B", "S1M")] <- "S1"
+    data$QC_status[data$QC_status %in% c("S2B", "S2M")] <- "S2"
+    data$QC_status[data$QC_status %in% c("S3B", "S3M")] <- "S3"
+    data$QC_status[data$QC_status %in% c("S4B", "S4M")] <- "S4"
+    data$QC_status[data$QC_status %in% c("S5B", "S5M")] <- "S5"
+    data$QC_status[data$QC_status %in% c("SH", "SX")] <- "SH-SX"
+    data$QC_status <- ordered(data$QC_status, levels = c("SNA", "SH-SX", "S1", "S2", "S3", "S4", "S5", "SNR"))
+    data$iucn <- ordered(data$iucn, levels = c("DD", "EW", "CR", "EN", "VU", "NT", "LC", "NE"))
     if (input$conserv_system == "iucn") {
-      ggplot(data, aes(iucn))+
-        geom_bar(aes(fill=kingdom)) +
-        xlab("Conservation Status") +
+      data$Status <- data$iucn
+      p <- ggplot(data) +
+        geom_bar(aes(class, fill = Status)) +
         ylab("Number of species") +
-        scale_fill_brewer(name = "Class", palette = "Set2")
-    }
+        coord_flip() +
+        scale_fill_manual(limits = c( "DD", "EW", "CR", "EN", "VU", "NT", "LC", "NE"), name = "Status", 
+                          values = c("#878787", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#66bd63", "#006837")) +
+        theme_bw() +
+        theme(text = element_text(size=15), axis.title.y=element_blank())
+      ggplotly(p) %>% config(displayModeBar = F)
+     }
     else {
-      ggplot(data, aes(QC_status))+
-        geom_bar(aes(fill=kingdom)) +
-        xlab("Conservation Status") +
+      data$Status <- data$QC_status
+      p <- ggplot(data) +
+        geom_bar(aes(class, fill = Status)) +
         ylab("Number of species") +
-        scale_fill_brewer(name = "Class", palette = "Set2")
+        coord_flip() +
+        scale_fill_manual(limits = c("SNA", "SH-SX", "S1", "S2", "S3", "S4", "S5", "SNR"), name = "Status", 
+                          values = c("#878787", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#66bd63", "#006837")) +
+        theme_bw() +
+        theme(text = element_text(size=15), axis.title.y=element_blank())
+      ggplotly(p) %>% config(displayModeBar = F)
     }
   })
 }

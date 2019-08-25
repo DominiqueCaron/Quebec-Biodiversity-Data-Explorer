@@ -77,6 +77,9 @@ fluidPage(theme=shinytheme("flatly"),
                      br(),
                      p(tags$b("This table shows all the records downloaded from GBIF. None of the filters (maximum year
                        and distance from selected area) are applied on this datatable.")),
+                     downloadButton("downloadData", "Download"),
+                     br(),
+                     br(),
                      # Table for the raw data downloaded from gbif
                      dataTableOutput(outputId = "data")
             ),
@@ -90,17 +93,17 @@ fluidPage(theme=shinytheme("flatly"),
             tabPanel("Plot",
                      br(),
                      radioButtons("conserv_system", "Choose the conservation status system",
-                                  c("Quebec (NatureServe)" = "QC_status",
-                                    "IUCN" = "iucn"),
-                                  inline = T),
+                                             c("Quebec (NatureServe)" = "QC_status",
+                                               "IUCN" = "iucn"),
+                                             inline = TRUE),
                      # Plot of the distribution of conservation status
-                     plotOutput("plot"),
+                     plotlyOutput("plot"),
                      br(),
                      h4("Information on conservation status and critera :"),
                      helpText(a("NatureServe conservation status definition",
                                 href = "http://explorer.natureserve.org/nsranks.htm")),
                      helpText(a("IUCN conservation status categories",
-                                href = "http://www.iucnredlist.org/static/categories_criteria_3_1#categories"))
+                                href = "https://www.iucnredlist.org/resources/categories-and-criteria"))
             )
           )
 )

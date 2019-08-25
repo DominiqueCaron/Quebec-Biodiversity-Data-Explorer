@@ -16,6 +16,7 @@ library(ggplot2)
 library(natserv)
 library(rgdal)
 library(tidyr)
+library(plotly)
 
 # Database of special status species
-tbl_status <- read.csv("species_status.csv", row.names = 1)
+tbl_status <- read.csv("species_status.csv", row.names = 1)[,-1]

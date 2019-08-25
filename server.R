@@ -246,7 +246,7 @@ function(input, output,session){
   })
   
   # Barplot for conservation status
-  output$plot <- renderPlot({
+  output$plot <- renderPlotly({
     data <- species_table()
     heighcol <- input$barheight
     data$QC_status [data$QC_status %in% c("S1B", "S1M")] <- "S1"
@@ -258,26 +258,28 @@ function(input, output,session){
     data$QC_status <- ordered(data$QC_status, levels = c("SNA", "SH-SX", "S1", "S2", "S3", "S4", "S5", "SNR"))
     data$iucn <- ordered(data$iucn, levels = c("DD", "EW", "CR", "EN", "VU", "NT", "LC", "NE"))
     if (input$conserv_system == "iucn") {
-      ggplot(data) +
-        geom_bar(aes(class, fill = iucn)) +
-        xlab("Class") +
+      data$Status <- data$iucn
+      p <- ggplot(data) +
+        geom_bar(aes(class, fill = Status)) +
         ylab("Number of species") +
         coord_flip() +
         scale_fill_manual(limits = c( "DD", "EW", "CR", "EN", "VU", "NT", "LC", "NE"), name = "Status", 
                           values = c("#878787", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#66bd63", "#006837")) +
         theme_bw() +
-        theme(text = element_text(size=20))
-    }
+        theme(text = element_text(size=15), axis.title.y=element_blank())
+      ggplotly(p) %>% config(displayModeBar = F)
+     }
     else {
-      ggplot(data) +
-        geom_bar(aes(class, fill = QC_status)) +
-        xlab("Class") +
+      data$Status <- data$QC_status
+      p <- ggplot(data) +
+        geom_bar(aes(class, fill = Status)) +
         ylab("Number of species") +
         coord_flip() +
         scale_fill_manual(limits = c("SNA", "SH-SX", "S1", "S2", "S3", "S4", "S5", "SNR"), name = "Status", 
                           values = c("#878787", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#66bd63", "#006837")) +
         theme_bw() +
-        theme(text = element_text(size=20))
+        theme(text = element_text(size=15), axis.title.y=element_blank())
+      ggplotly(p) %>% config(displayModeBar = F)
     }
   })
 }

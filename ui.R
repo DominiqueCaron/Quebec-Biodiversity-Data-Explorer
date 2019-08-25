@@ -97,7 +97,7 @@ fluidPage(theme=shinytheme("flatly"),
                                                "IUCN" = "iucn"),
                                              inline = TRUE),
                      # Plot of the distribution of conservation status
-                     plotOutput("plot"),
+                     plotlyOutput("plot"),
                      br(),
                      h4("Information on conservation status and critera :"),
                      helpText(a("NatureServe conservation status definition",

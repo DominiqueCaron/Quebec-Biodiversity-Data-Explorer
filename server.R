@@ -254,14 +254,17 @@ function(input, output,session){
     data$QC_status[data$QC_status %in% c("S3B", "S3M")] <- "S3"
     data$QC_status[data$QC_status %in% c("S4B", "S4M")] <- "S4"
     data$QC_status[data$QC_status %in% c("S5B", "S5M")] <- "S5"
+    data$QC_status[data$QC_status %in% c("SH", "SX")] <- "SH-SX"
+    data$QC_status <- ordered(data$QC_status, levels = c("SNA", "SH-SX", "S1", "S2", "S3", "S4", "S5", "SNR"))
+    data$iucn <- ordered(data$iucn, levels = c("DD", "EW", "CR", "EN", "VU", "NT", "LC", "NE"))
     if (input$conserv_system == "iucn") {
       ggplot(data) +
         geom_bar(aes(class, fill = iucn)) +
         xlab("Class") +
         ylab("Number of species") +
         coord_flip() +
-        scale_fill_manual(limits = c("EW", "CR", "EN", "VU", "NT", "LC", "NE", "DD"), name = "Status", 
-                          values = c("black", "red4", "red", "orange", "yellow", "forestgreen", "darkgreen", "grey")) +
+        scale_fill_manual(limits = c( "DD", "EW", "CR", "EN", "VU", "NT", "LC", "NE"), name = "Status", 
+                          values = c("grey", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#a6d96a", "#006837")) +
         theme_bw()
     }
     else {
@@ -270,8 +273,8 @@ function(input, output,session){
         xlab("Class") +
         ylab("Number of species") +
         coord_flip() +
-        scale_fill_manual(limits = c("SX", "SH", "S1", "S2", "S3", "S4", "S5", "SNR", "SNA"), name = "Status", 
-                          values = c("black", "black", "red4", "red", "orange", "yellow", "forestgreen", "darkgreen", "grey")) +
+        scale_fill_manual(limits = c("SNA", "SH-SX", "S1", "S2", "S3", "S4", "S5", "SNR"), name = "Status", 
+                          values = c("grey", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#a6d96a", "#006837")) +
         theme_bw()
     }
   })

@@ -101,9 +101,9 @@ fluidPage(theme=shinytheme("flatly"),
                      br(),
                      h4("Information on conservation status and critera :"),
                      helpText(a("NatureServe conservation status definition",
-                                href = "http://explorer.natureserve.org/nsranks.htm")),
+                                href = "http://explorer.natureserve.org/nsranks.htm", target="_blank")),
                      helpText(a("IUCN conservation status categories",
-                                href = "https://www.iucnredlist.org/resources/categories-and-criteria"))
+                                href = "https://www.iucnredlist.org/resources/categories-and-criteria", target="_blank"))
             )
           )
 )

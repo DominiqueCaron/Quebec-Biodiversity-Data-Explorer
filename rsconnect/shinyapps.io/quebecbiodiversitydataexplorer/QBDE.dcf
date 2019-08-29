@@ -5,9 +5,9 @@ account: quebecbiodiversitydataexplorer
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 360009
-bundleId: 2353807
+bundleId: 2369055
 url: https://quebecbiodiversitydataexplorer.shinyapps.io/qbde/
-when: 1566752300.32925
+when: 1567109022.36704
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: manifest.json

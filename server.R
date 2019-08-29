@@ -260,26 +260,30 @@ function(input, output,session){
     if (input$conserv_system == "iucn") {
       data$Status <- data$iucn
       p <- ggplot(data) +
-        geom_bar(aes(class, fill = Status)) +
+        geom_bar(aes(class, fill = Status,
+                     text = paste("Class:", class,
+                                  "\nConservation status:", Status))) +
         ylab("Number of species") +
         coord_flip() +
         scale_fill_manual(limits = c( "DD", "EW", "CR", "EN", "VU", "NT", "LC", "NE"), name = "Status", 
                           values = c("#878787", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#66bd63", "#006837")) +
         theme_bw() +
         theme(text = element_text(size=15), axis.title.y=element_blank())
-      ggplotly(p) %>% config(displayModeBar = F)
+      ggplotly(p, tooltip = c("text","count")) %>% config(displayModeBar = F)
      }
     else {
       data$Status <- data$QC_status
       p <- ggplot(data) +
-        geom_bar(aes(class, fill = Status)) +
+        geom_bar(aes(class, fill = Status,
+                     text = paste("Class:", class,
+                                  "\nConservation status:", Status))) +
         ylab("Number of species") +
         coord_flip() +
         scale_fill_manual(limits = c("SNA", "SH-SX", "S1", "S2", "S3", "S4", "S5", "SNR"), name = "Status", 
                           values = c("#878787", "black", "#a50026", "#d73027", "#fdae61", "#fee08b", "#66bd63", "#006837")) +
         theme_bw() +
         theme(text = element_text(size=15), axis.title.y=element_blank())
-      ggplotly(p) %>% config(displayModeBar = F)
+      ggplotly(p, tooltip = c("text","count")) %>% config(displayModeBar = F)
     }
   })
 }
